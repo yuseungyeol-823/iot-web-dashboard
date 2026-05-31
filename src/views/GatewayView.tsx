@@ -41,13 +41,13 @@ export default function GatewayView({
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsAuthenticating(true);
-    onAddLog(`🔑 관리자 정보 검측 요청: 식별자 [${adminId}]에 대한 핸드쉐이크 보안 조회 중...`, 'info');
+    onAddLog(`🔑 관리자 로그인 정보 확인 중...`, 'info');
 
     setTimeout(() => {
       setIsAuthenticating(false);
       onLoginSuccess();
-      onAddLog(`🟢 암호 해독 승인: 핸드쉐이크 정합 완료. 서버 접속 권한이 발부되었습니다. 반갑습니다, 관리자님.`, 'success');
-      alert("🔒 보안 침투 검증에 만족했습니다! 실시간 데이터 센싱 및 파라미터 임계 변조 어플리케이션으로 이동합니다.");
+      onAddLog(`🟢 로그인 성공: 서버 접속 권한이 승인되었습니다. 반갑습니다, 관리자님.`, 'success');
+      alert("🔒 로그인 완료! 실시간 데이터 모니터링 및 설정 대시보드로 이동합니다.");
     }, 1500);
   };
 
@@ -63,7 +63,7 @@ export default function GatewayView({
               AetherSpace 자원 관제소
             </h1>
           </div>
-          <p className="text-xs text-slate-400">실시간 사내 점유 자원 보호 및 유령 좌석 오토클린 기전</p>
+          <p className="text-xs text-slate-400">실시간 사내 자율 좌석 보호 및 유령 좌석 자동 반납 시스템</p>
         </div>
 
         {/* Central Auth Login Card */}
@@ -72,21 +72,21 @@ export default function GatewayView({
           <div className="p-6 md:p-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="h-8 w-1 bg-blue-500 rounded-full"></div>
-              <h2 className="text-lg font-bold text-slate-100">최상위 보안 터널 인증 Gateway</h2>
+              <h2 className="text-lg font-bold text-slate-100">관리자 인증 게이트웨이</h2>
             </div>
 
             {isAuthenticated ? (
               // Authenticated greeting
               <div className="text-center py-8 space-y-4 animate-fade-in">
-                <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 mx-auto animate-bounce">
+                <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center text-emerald-405 mx-auto animate-bounce">
                   <ShieldCheck size={32} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-100">보안 인증 터널 정상 기동</h3>
-                  <p className="text-xs text-slate-400 mt-1">인증 토큰: {adminId}</p>
+                  <h3 className="text-sm font-bold text-slate-100">관리자 로그인 완료</h3>
+                  <p className="text-xs text-slate-400 mt-1">접속 계정: {adminId}</p>
                 </div>
                 <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-850 text-xs text-emerald-400 font-mono select-text">
-                  보안 세션 토큰: AES256-4F92-SUITE
+                  보안 세션 토큰: AES256-ACTIVE
                 </div>
               </div>
             ) : (
@@ -95,7 +95,7 @@ export default function GatewayView({
                 {/* Admin ID Field */}
                 <div className="space-y-1.5">
                   <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-400">
-                    원격 관리 핵심 식별자 ID
+                    관리자 계정 ID
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
@@ -107,7 +107,7 @@ export default function GatewayView({
                       value={adminId}
                       onChange={(e) => setAdminId(e.target.value)}
                       className="w-full bg-slate-950/80 border border-slate-805 focus:border-blue-500 rounded-xl py-3 pl-12 pr-4 text-xs font-mono text-slate-205 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all placeholder:text-slate-600"
-                      placeholder="원격 조종 계정 식별 키 입력..."
+                      placeholder="이메일 또는 ID 입력"
                     />
                   </div>
                 </div>
@@ -115,7 +115,7 @@ export default function GatewayView({
                 {/* Password field */}
                 <div className="space-y-1.5">
                   <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-400">
-                    관리자 원격 접속 패스 토큰
+                    관리자 비밀번호
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
@@ -150,7 +150,7 @@ export default function GatewayView({
                       <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
                     ) : (
                       <>
-                        <span>인가 및 액세서 핸드쉐이크 개시</span>
+                        <span>로그인 및 접속하기</span>
                         <Lock size={14} />
                       </>
                     )}
@@ -163,9 +163,9 @@ export default function GatewayView({
                         defaultChecked
                         className="rounded border-slate-800 text-blue-500 focus:ring-blue-500/35 bg-slate-950" 
                       />
-                      <span className="group-hover:text-slate-200 transition-colors">현재 조종 기면 보안 기억</span>
+                      <span className="group-hover:text-slate-200 transition-colors">로그인 상태 유지</span>
                     </label>
-                    <a href="#forgot" onClick={(e) => { e.preventDefault(); alert("초기 보안 접속 정보 안내:\n\n계정 ID: root@aetherspace\n임시 비밀번호: aetherspace2026"); }} className="hover:underline hover:text-blue-400">패스 토큰 찾기</a>
+                    <a href="#forgot" onClick={(e) => { e.preventDefault(); alert("초기 접속 계정 정보 안내:\n\n계정 ID: root@aetherspace\n임시 비밀번호: aetherspace2026"); }} className="hover:underline hover:text-blue-400">비밀번호 찾기</a>
                   </div>
                 </div>
               </form>
@@ -177,9 +177,9 @@ export default function GatewayView({
           <div className="bg-slate-950/80 px-6 py-4 border-t border-slate-850/80 flex justify-between items-center text-[10px] text-slate-500 font-mono">
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>데이터 정합성: AES-256 군사용 보안 세그정체화</span>
+              <span>보안 사양: AES-256 표준 보안 암호화</span>
             </div>
-            <span>노드 고유주소: 0x4F92</span>
+            <span>고유 노드 ID: 0x4F92</span>
           </div>
 
         </div>
@@ -191,9 +191,9 @@ export default function GatewayView({
               <ShieldAlert size={20} className="animate-bounce" />
             </div>
             <div className="pr-6">
-              <h3 className="text-xs font-bold text-rose-400">보안 게이트웨이 침입 가드 경보</h3>
+              <h3 className="text-xs font-bold text-rose-400">비인가 접근 감지 경보</h3>
               <p className="text-[11px] text-slate-400 leading-relaxed mt-1">
-                인증을 누락한 채 원격 임계 조절이나 클러스터 수정 콘솔에 무단 접근을 개시하여, 시스템 내의 게이트웨어 보호벽이 원격 인텔리전스 레이어를 긴급 강제 요격했습니다. 유효 기면 토큰 계정 접속이 선행되어야 작동합니다.
+                접근 권한이 없습니다. 관리자 로그인을 완료한 후 다시 시도해 주세요.
               </p>
             </div>
             <button 
@@ -212,11 +212,11 @@ export default function GatewayView({
         <div className="flex flex-col gap-2.5 text-[10px] font-mono text-slate-500 tracking-wide font-medium">
           <div className="flex items-center gap-1.5 font-semibold">
             <History size={11} className="text-slate-500" />
-            <span>최종 성공 접속 기록: 2026-05-31 14:02:22 UTC</span>
+            <span>최근 로그인 기록: 2026-06-01 00:10:15</span>
           </div>
           <div className="flex items-center gap-1.5 font-semibold">
             <Globe size={11} className="text-slate-500" />
-            <span>현재 접속 탐지된 사내 게이트웨이 IP: 192.168.1.104</span>
+            <span>현재 접속 감지된 사내 IP 주소: 192.168.1.104</span>
           </div>
         </div>
       </footer>

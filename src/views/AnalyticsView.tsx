@@ -33,7 +33,7 @@ export default function AnalyticsView({ onAddLog }: AnalyticsViewProps) {
     const pulseTimer = setInterval(() => {
       setFsmPulse(prev => {
         if (prev <= 1) {
-          onAddLog("📡 FSM AUDIT INSTIGATED: Standard sweeping routines launched for all 48 nodes.", 'info');
+          onAddLog("📡 정기 감지 스캔 완료: 48개 전체 구역의 좌석 자동 반납 스캔을 진행했습니다.", 'info');
           return 15; // reset parameter loop
         }
         return prev - 1;
@@ -88,8 +88,8 @@ export default function AnalyticsView({ onAddLog }: AnalyticsViewProps) {
   ]);
 
   const handleExportCSV = () => {
-    onAddLog("💾 CSV 데이터 아카이빙: 실시간 공간 자원 지표, 턴오버 및 FSM 스윕 처리 역사를 컴파일 및 패키징 완료", 'success');
-    alert("🟢 시스템 통계 및 누적 좌석 FSM 세그먼트 이력을 성공적으로 컴파일하여 'AETHER_SPATIAL_ANALYTICS.csv' 파일 패키징을 완료했습니다!");
+    onAddLog("💾 CSV 데이터 추출 완료: 실시간 점유율 및 자동 반납 기록 파일이 저장되었습니다.", 'success');
+    alert("🟢 시스템 통계 및 좌석 반납 이력이 'AETHER_SPATIAL_ANALYTICS.csv' 파일로 저장되었습니다.");
   };
 
   return (
@@ -98,9 +98,9 @@ export default function AnalyticsView({ onAddLog }: AnalyticsViewProps) {
       {/* Date Filters and Action bar */}
       <header className="flex flex-col md:flex-row justify-between md:items-end gap-4 pb-2 border-b border-slate-800/80">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">공간 분석 리포트 대시보드</h1>
+          <h1 className="text-2xl font-bold text-slate-100">공간 이용 분석 대시보드</h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            좌석별 실시간 밀집도 점유 트렌드와 장기 미사용 구획에 대한 FSM 리스크 정리 회전율 통계 내역입니다.
+            실시간 좌석 점유 현황과 장기 미사용 구역의 회전율 통계입니다.
           </p>
         </div>
         <div className="flex gap-3">
@@ -128,9 +128,9 @@ export default function AnalyticsView({ onAddLog }: AnalyticsViewProps) {
               <div>
                 <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
                   <TrendingUp className="text-blue-400" size={16} />
-                  실시간 공간 혼잡 추이 분석
+                  실시간 공간 점유율 추이
                 </h2>
-                <p className="text-[11px] text-slate-400">피크 타임 실시간 점유 데이터와 알고리즘 예측 경로 비교</p>
+                <p className="text-[11px] text-slate-400">시간대별 실제 점유 트렌드와 예측 점유율 비교</p>
               </div>
               <div className="flex items-center gap-4 text-[10px] font-mono leading-relaxed select-none">
                 <div className="flex items-center gap-2">
@@ -237,16 +237,16 @@ export default function AnalyticsView({ onAddLog }: AnalyticsViewProps) {
           {/* Bottom Card Metas Summary Matrix */}
           <div className="mt-8 grid grid-cols-3 gap-4 border-t border-slate-800/80 pt-5">
             <div>
-              <div className="text-slate-400 text-[9px] font-bold tracking-widest uppercase">최대 피크 혼잡 비율</div>
+              <div className="text-slate-400 text-[9px] font-bold tracking-widest uppercase">최고 혼잡 점유율</div>
               <div className="text-xl font-mono font-bold text-slate-100 mt-0.5">88.4%</div>
             </div>
             <div>
-              <div className="text-slate-400 text-[9px] font-bold tracking-widest uppercase font-sans">최대 혼잡 지속 지점</div>
+              <div className="text-slate-400 text-[9px] font-bold tracking-widest uppercase font-sans">최고 혼잡 지속 시간</div>
               <div className="text-xl font-mono font-bold text-slate-100 mt-0.5">4시간 12분</div>
             </div>
             <div>
-              <div className="text-slate-400 text-[9px] font-bold tracking-widest uppercase font-sans">실시간 혼잡 정도</div>
-              <div className="text-xl font-mono font-bold text-rose-450 mt-0.5 animate-pulse">임계 혼잡 구간</div>
+              <div className="text-slate-400 text-[9px] font-bold tracking-widest uppercase font-sans">실시간 혼잡 레벨</div>
+              <div className="text-xl font-mono font-bold text-rose-450 mt-0.5 animate-pulse">정체 구간 (주의)</div>
             </div>
           </div>
         </section>
@@ -256,9 +256,9 @@ export default function AnalyticsView({ onAddLog }: AnalyticsViewProps) {
           <div>
             <h2 className="text-base font-bold text-slate-205 flex items-center gap-2 pb-1 border-b border-slate-800">
               <Zap className="text-amber-500" size={16} />
-              공간 리소스 회전 주기 (턴오버)
+              좌석 사용 회전율 (Turnover)
             </h2>
-            <p className="text-[11px] text-slate-400 mt-1">자원이용 연동 구역별 리셋 밀집 수준 분산 통계</p>
+            <p className="text-[11px] text-slate-400 mt-1">각 구역별 실시간 좌석 순환 지표 통계입니다.</p>
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center py-6">
@@ -316,14 +316,14 @@ export default function AnalyticsView({ onAddLog }: AnalyticsViewProps) {
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                <span className="text-slate-405">집중형 핫스팟 (A구역)</span>
+                <span className="text-slate-405">집중 근무 구역 (A구역)</span>
               </div>
               <span className="font-mono text-slate-200 font-semibold">72% 회전</span>
             </div>
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                <span className="text-slate-405">저밀도 서정형 (C구역)</span>
+                <span className="text-slate-405">라운지 및 휴게 구역 (C구역)</span>
               </div>
               <span className="font-mono text-slate-200 font-semibold">28% 회전</span>
             </div>
@@ -336,16 +336,16 @@ export default function AnalyticsView({ onAddLog }: AnalyticsViewProps) {
             <div>
               <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
                 <UserX size={18} className="text-rose-455" />
-                장기 부재 및 미사용 좌석 자동 해제 모니터링
+                장기 부재 좌석 자동 반납 모니터링
               </h2>
               <p className="text-[11px] text-slate-400 leading-relaxed mt-0.5">
-                지정 시간이 경과하여 FSM 오토-클리어 조치된 좌석 반납 내역 로그입니다.
+                자리비움 허용 시간이 초과되어 자동 반납 처리된 좌석 목록입니다.
               </p>
             </div>
             <div className="flex justify-end select-none">
               <span className="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
                 <span className="w-1.5 h-1.5 bg-rose-500 rounded-full inline-block animate-pulse"></span>
-                금일 자동클리어 대상 필터링: 12건
+                오늘의 자동 반납 건수: 12건
               </span>
             </div>
           </div>
@@ -354,20 +354,19 @@ export default function AnalyticsView({ onAddLog }: AnalyticsViewProps) {
             <table className="w-full border-collapse text-slate-300">
               <thead>
                 <tr className="bg-slate-950/40 text-left border-b border-slate-800">
-                  <th className="px-6 py-3 text-[10px] uppercase font-bold tracking-wider text-slate-400 font-sans">식별자 / 노드 ID</th>
-                  <th className="px-6 py-3 text-[10px] uppercase font-bold tracking-wider text-slate-400 font-sans">소속 구획 Segment</th>
-                  <th className="px-6 py-3 text-[10px] uppercase font-bold tracking-wider text-slate-400 font-sans">최종 모션 감지 시간</th>
-                  <th className="px-6 py-3 text-[10px] uppercase font-bold tracking-wider text-slate-400 font-sans">자리비움 대기 오버플로우</th>
-                  <th className="px-6 py-3 text-[10px] uppercase font-bold tracking-wider text-slate-400 font-sans">오토 트리거 액션</th>
-                  <th className="px-6 py-3 text-right text-[10px] uppercase font-bold tracking-wider text-slate-400 font-sans">최종 가용 상태</th>
+                  <th className="px-6 py-3 text-[10px] uppercase font-bold tracking-wider text-slate-400 font-sans">사용자명 / 사원 ID</th>
+                  <th className="px-6 py-3 text-[10px] uppercase font-bold tracking-wider text-slate-400 font-sans">배정 노드(좌석)</th>
+                  <th className="px-6 py-3 text-[10px] uppercase font-bold tracking-wider text-slate-400 font-sans">마지막 움직임 감지</th>
+                  <th className="px-6 py-3 text-[10px] uppercase font-bold tracking-wider text-slate-400 font-sans">자리비움 경과 비율</th>
+                  <th className="px-6 py-3 text-[10px] uppercase font-bold tracking-wider text-slate-400 font-sans">처리 내용</th>
+                  <th className="px-6 py-3 text-right text-[10px] uppercase font-bold tracking-wider text-slate-400 font-sans">상태</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-850/60">
                 {records.map((r) => {
-                  let mappedAction = "자동 반납 오더 전송";
-                  if (r.actionTaken === "FSM RELEASED") mappedAction = "FSM 자동 강제 해제";
-                  if (r.actionTaken === "WARN AUDIT") mappedAction = "자동 반납 경보 작동";
-                  if (r.actionTaken === "GRACE TICK") mappedAction = "유예 카운트다운 전송";
+                  let mappedAction = "자동 반납 처리";
+                  if (r.actionTaken === "FSM_FORCE_EXIT") mappedAction = "자동 반납 완료";
+                  if (r.actionTaken === "NOTIFY_SENT") mappedAction = "반납 경보 발송";
 
                   return (
                     <tr key={r.id} className="hover:bg-slate-900/40 transition-all duration-200">
@@ -394,8 +393,8 @@ export default function AnalyticsView({ onAddLog }: AnalyticsViewProps) {
                             style={{ width: `${r.idleProgress}%` }}
                           ></div>
                         </div>
-                        <span className={`text-[9px] font-mono mt-1 block font-semibold ${r.idleProgress === 100 ? 'text-rose-455' : 'text-blue-400'}`}>
-                          {r.limitText === "10m Away Limit reached" ? "10분 허용 한계선 마감" : `${r.limitText.replace("m Away", "분 부재 경과")}`}
+                        <span className={`text-[9px] font-mono mt-1 block font-semibold ${r.idleProgress === 100 ? 'text-rose-455' : 'text-blue-404'}`}>
+                          {r.limitText.replace("15m 00s (Limit)", "15분 초과 (자동반납)").replace("10m 14s (Warning)", "10분 14초 (경고)")}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -406,11 +405,11 @@ export default function AnalyticsView({ onAddLog }: AnalyticsViewProps) {
                       <td className="px-6 py-4 text-right">
                         {r.status === 'Released' ? (
                           <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-400 bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800 uppercase tracking-widest font-sans">
-                            ✔️ 처리 해제됨
+                            ✔️ 반납 완료
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-md border border-amber-500/20 uppercase tracking-widest font-sans">
-                            ⚠️ 유예 진행중
+                            ⚠️ 경고 진행 중
                           </span>
                         )}
                       </td>
@@ -430,7 +429,7 @@ export default function AnalyticsView({ onAddLog }: AnalyticsViewProps) {
               <Gauge size={16} className="text-blue-400" />
               <span className="text-[9px] text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded-md font-bold">+12%</span>
             </div>
-            <div className="text-slate-500 text-[10px] font-bold tracking-wider uppercase font-sans">데이터 처리 지연시간</div>
+            <div className="text-slate-500 text-[10px] font-bold tracking-wider uppercase font-sans">실시간 감지 반응속도</div>
             <div className="text-xl font-mono font-bold text-slate-200 mt-1">42ms</div>
           </div>
 
@@ -439,8 +438,8 @@ export default function AnalyticsView({ onAddLog }: AnalyticsViewProps) {
               <UserX size={16} className="text-amber-500" />
               <span className="text-[9px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded-md font-bold">-4%</span>
             </div>
-            <div className="text-slate-500 text-[10px] font-bold tracking-wider uppercase font-sans">어색한 공간 이탈률 (노쇼)</div>
-            <div className="text-xl font-mono font-bold text-slate-200 mt-1">8.2% 정기 노쇼</div>
+            <div className="text-slate-500 text-[10px] font-bold tracking-wider uppercase font-sans">좌석 부재중 발생률</div>
+            <div className="text-xl font-mono font-bold text-slate-200 mt-1">평균 8.2%</div>
           </div>
 
           <div className="bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 transition-colors p-4 rounded-xl shadow-sm select-none cursor-default">
@@ -448,8 +447,8 @@ export default function AnalyticsView({ onAddLog }: AnalyticsViewProps) {
               <Zap size={16} className="text-slate-400" />
               <span className="text-[9px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md font-bold">정상 가동</span>
             </div>
-            <div className="text-slate-500 text-[10px] font-bold tracking-wider uppercase font-sans">FSM 검사 신뢰성 지수</div>
-            <div className="text-xl font-mono font-bold text-slate-200 mt-1">99.4% 무오류</div>
+            <div className="text-slate-500 text-[10px] font-bold tracking-wider uppercase font-sans">시스템 신뢰성 지수</div>
+            <div className="text-xl font-mono font-bold text-slate-200 mt-1">99.4% 정상</div>
           </div>
 
           <div className="bg-slate-900/60 border border-slate-800/80 hover:border-blue-500/30 transition-colors p-4 rounded-xl shadow-sm select-none cursor-default relative overflow-hidden">
@@ -458,7 +457,7 @@ export default function AnalyticsView({ onAddLog }: AnalyticsViewProps) {
               <span className="text-[9px] text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded-md font-bold animate-ping absolute top-4 right-4"></span>
               <span className="text-[9px] text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded-md font-bold">동작 중</span>
             </div>
-            <div className="text-slate-500 text-[10px] font-bold tracking-wider uppercase font-sans">다음 FSM 순차 탐색 청소까지</div>
+            <div className="text-slate-500 text-[10px] font-bold tracking-wider uppercase font-sans">다음 자동 반납 정기 스캔</div>
             <div className="text-xl font-mono font-bold text-blue-404 mt-1 animate-pulse">{fsmPulse}초</div>
           </div>
 
