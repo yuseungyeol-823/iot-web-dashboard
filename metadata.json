@@ -1,0 +1,6 @@
+{
+  "name": "AetherSpace Control",
+  "description": "Real-time seat occupancy monitoring, ROI camera calibration config, spatial analytics, and admin secure gateway.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
