@@ -1,20 +1,61 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# 🌐 지능형 공간 점유 실시간 관제 시스템 (iot-web-dashboard)
 
-# Run and deploy your AI Studio app
+> **YOLOv8 엣지 인공지능 기반 관심구역(ROI) 스캔 및 유한 상태 머신(FSM) 알고리즘**을 활용한 실시간 세미나실 좌석 점유 관제 포털 프론트엔드 시스템입니다. 본 시스템은 고유한 미래지향적 심해 테마 가이드인 **Obsidian Orbit** 설계 표준을 준수합니다.
 
-This contains everything you need to run your app locally.
+---
 
-View your app in AI Studio: https://ai.studio/apps/72b02e8d-c2fc-4143-bd85-5abd3a386a77
+## 🖥️ 프로젝트 개요 및 핵심 아키텍처
 
-## Run Locally
+본 웹 대시보드는 단일 페이지(SPA)의 한계를 탈피하고, 다중 페이지 아키텍처(Multi-Page Architecture) 기반으로 일반 이용자와 관리자 권한을 완벽히 격리하여 설계되었습니다. 라즈베리 파이 4 임베디드 단말 노드 및 Spring Boot 백엔드와의 전이중 실시간 연동을 타겟으로 구축되었습니다.
 
-**Prerequisites:**  Node.js
+### 🛰️ 데이터 파이프라인 (Data Pipeline Flow)
+* **라즈베리파이 4 (YOLOv8 + FSM 코어)** ➡️ *HTTP POST(실시간 상태 전이 신호 전송)* ➡️ **Spring Boot 관제 백엔드 레포지토리** ➡️ *SSE(Server-Sent Events / 단방향 푸시 스트림)* ➡️ **React 프론트엔드 포털 (AetherSpace Core)**
 
+---
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## ✨ 핵심 웹 기능 목록 (Key Features)
+
+### 1. 실시간 원형 서킷 관제 대시보드 (`/`)
+* **방사형 GUI 매핑:** 기존의 딱딱한 사각형 그리드를 배제하고, 중앙의 거대한 메인 원형 게이지를 중심으로 4개의 관제 구역(Zone) 노드가 호(Circular Arc)를 그리며 감싸는 테크니컬 디자인 레이아웃을 구현했습니다.
+* **SVG 동적 게이지:** 상태 변화에 따라 전체 세미나실의 이용률이 수학적 메커니즘을 통해 실시간 스케일 애니메이션으로 게이지 바에 동적 반영됩니다.
+* **FSM 타이머 오버레이:** 특정 구역이 일시 부재(`Away`) 상태로 전이되면, 링 측면 카드 내부에 노란색 인디케이터 칩이 활성화되며 1초 단위로 줄어드는 카운트다운 타이머가 동적 바인딩됩니다.
+
+### 📊 2. 공간 자원 데이터 분석 통계 (`/analytics`)
+* **혼잡도 트렌드:** `Recharts` 라이브러리를 통해 시간대별 실제 밀집도 데이터와 AI 예측 곡선을 선형 그래프로 오버레이 시각화합니다.
+* **구역 회전율 분석:** 이용 패턴 불균형을 추적하기 위해 도넛 차트(Donut Chart) 기반 자원 활용 계수를 수치화합니다.
+* **노쇼(No-Show) 제어 리포트:** 장기 자리비움 유예 시간을 초과하여 가용성이 강제 회수된 이력을 한눈에 볼 수 있는 정밀 테이블을 제공합니다.
+
+### ⚙️ 3. AI 엣지 원격 설정 및 캘리브레이션 (`/admin`)
+* **ROI 가상 바운딩 툴:** 64-bit 비전 좌표 분석을 기반으로 가상의 좌석 검출 구역 앵커링 시뮬레이션을 구현했습니다.
+* **원격 파라미터 제어:** 유예 제한 시간 및 YOLO 가중치 민감도 스케일을 웹 UI 상에서 슬라이더 조작을 통해 백엔드로 즉시 갱신 전송할 수 있는 인풋 컨트롤 패널을 지원합니다.
+
+### 🔐 4. 시스템 라우팅 보안 가이드 (`/login`)
+* **라우터 가드 오버레이:** 인가되지 않은 외부 세션이 관리자 전용 제어 구역에 접근 시, 자바스크립트 스코프 단에서 인터셉트하여 경고 모달을 띄우고 기본 로그인 관문으로 강제 격리하는 보안 체계를 구축했습니다.
+
+---
+
+## 🎨 기술 스택 및 디자인 표준 (Tech Stack & UI Specifications)
+
+* **프레임워크:** React 18 (Vite Fast-Bundling Node)
+* **라우팅 인프라:** `react-router-dom` v6
+* **스타일링:** Tailwind CSS (Fluid & Responsive Utilities 적용)
+* **시각화 그래픽 엔진:** Recharts Engine
+* **아이콘 아키텍처:** Lucide React Component Font
+* **디자인 테마 스펙 (DESIGN.md 발췌):**
+  * 베이스 표면 컬러: Deep Sea Blue (`#051424`)
+  * 포인트 상태 3색 코드: 🟢 공석(`emerald`), 🔴 사용중(`rose`), 🟡 부재중(`amber`)
+  * 트랜지션 모션: 물리적 하드웨어 LED의 잔상을 모방하기 위한 전역 `500ms ease-in-out` 변환 곡선 적용.
+
+---
+
+## 🚀 백엔드 연동 전 단독 테스트 방법 (Standalone Demo Mode)
+
+본 프론트엔드 아키텍처는 백엔드(Spring Boot) 연동 전 상태에서도 완벽하게 단독 디버깅 및 시연이 가능하도록 **독립형 모의 데이터(Mock Data) 생성기**를 전장 탑재하고 있습니다.
+
+1. **의존성 모듈 설치 및 개발 서버 구동**
+   ```bash
+   # 필수 라이브러리 및 차트, 아이콘 엔진 전역 주입
+   npm install react-router-dom lucide-react recharts
+   
+   # Vite 초고속 개발 런타임 구동
+   npm run dev
