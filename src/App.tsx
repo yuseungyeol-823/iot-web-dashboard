@@ -93,6 +93,25 @@ export default function App() {
   // Update secure parameters globally
   const handleUpdateParams = (awayTimeout: number, sensitivity: 'Low' | 'Medium' | 'High') => {
     setSensingParams({ awayTimeout, sensitivity });
+
+    // Sync global configurations to the Spring Boot backend
+    fetch(`http://${window.location.hostname}:8080/api/admin/config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        awayTimeout,
+        sensitivity
+      })
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Global config sync failed');
+      addLog(`⚙️ 감지 임계 설정 백엔드 저장 완료: 자동 반납 대기 시간 ${awayTimeout}분`, 'warning');
+    })
+    .catch(err => {
+      console.error('Config sync error:', err);
+      addLog(`❌ 설정 저장 실패: 백엔드 서버와의 네트워크 연결 상태를 확인하세요.`, 'alert');
+    });
+
     // Update all active AWAY seats' timers to the new timeout in seconds
     setSeats(prevSeats => {
       return prevSeats.map(seat => {
@@ -119,6 +138,25 @@ export default function App() {
       });
     });
   };
+
+  // 3.4 Load Remote AI Configuration on Mount
+  useEffect(() => {
+    fetch(`http://${window.location.hostname}:8080/api/admin/config`)
+      .then(res => {
+        if (!res.ok) throw new Error('Remote config fetch failed');
+        return res.json();
+      })
+      .then(data => {
+        setSensingParams({
+          awayTimeout: data.awayTimeout,
+          sensitivity: data.sensitivity
+        });
+        addLog(`⚙️ 백엔드로부터 AI 감지 임계 설정을 동기화했습니다 (부재 대기: ${data.awayTimeout}분)`, 'success');
+      })
+      .catch(err => {
+        console.error('Failed to fetch config from backend:', err);
+      });
+  }, [addLog]);
 
   // 3.5 Live Backend Integration: SSE Event Streaming Subscription
   useEffect(() => {
@@ -285,48 +323,7 @@ export default function App() {
     return () => clearInterval(timerTick);
   }, []);
 
-  // 5. Simulated Raspberry Pi YOLOv8 / sensor telemetry heartbeat (Every 35 seconds)
-  useEffect(() => {
-    const heartbeat = setInterval(() => {
-      // Pick a random seat to trip state for high density simulation
-      const randIdx = Math.floor(Math.random() * 48);
-      const seatIdStr = String(randIdx + 1).padStart(2, '0');
-      const reactId = `S-${seatIdStr}`;
-
-      setSeats(prevSeats => {
-        const target = prevSeats.find(s => s.id === reactId);
-        if (!target) return prevSeats;
-
-        let nextBackendStatus = 'empty';
-        let nextRemainingTime = null;
-
-        if (target.status === 'AVAILABLE') {
-          nextBackendStatus = 'occupied';
-        } else if (target.status === 'OCCUPIED') {
-          nextBackendStatus = 'away';
-          nextRemainingTime = sensingParams.awayTimeout * 60;
-        } else if (target.status === 'AWAY') {
-          nextBackendStatus = 'empty';
-        }
-
-        // POST status update to backend, which triggers SSE broadcast to all subscribers
-        fetch(`http://${window.location.hostname}:8080/api/seats/update`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            seatId: seatIdStr,
-            status: nextBackendStatus,
-            remainingTime: nextRemainingTime
-          })
-        }).catch(err => console.error('Raspberry Pi heartbeat emulation update failed:', err));
-
-        return prevSeats; // do not update state locally; let SSE stream broadcast handle state transition smoothly
-      });
-    }, 35000);
-
-    return () => clearInterval(heartbeat);
-  }, [sensingParams.awayTimeout]);
-
+  // 5. Standalone IoT simulation is now offloaded to mock_iot_node.py to ensure pure server-side telemetry.
   // Update specific seat states via manual Administrator overrides calling the backend API
   const handleUpdateSeat = (seatId: string, newStatus: 'AVAILABLE' | 'OCCUPIED' | 'AWAY') => {
     const numericId = seatId.replace('S-', '');

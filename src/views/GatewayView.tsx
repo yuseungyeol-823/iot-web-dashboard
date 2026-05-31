@@ -34,7 +34,7 @@ export default function GatewayView({
   onAddLog
 }: GatewayViewProps) {
   const [adminId, setAdminId] = useState('root@aetherspace');
-  const [password, setPassword] = useState('••••••••••••');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
@@ -43,12 +43,34 @@ export default function GatewayView({
     setIsAuthenticating(true);
     onAddLog(`🔑 관리자 로그인 정보 확인 중...`, 'info');
 
-    setTimeout(() => {
+    fetch(`http://${window.location.hostname}:8080/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        adminId: adminId,
+        password: password
+      })
+    })
+    .then(async (res) => {
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || '인증에 실패했습니다.');
+      }
+      return data;
+    })
+    .then((data) => {
       setIsAuthenticating(false);
       onLoginSuccess();
       onAddLog(`🟢 로그인 성공: 서버 접속 권한이 승인되었습니다. 반갑습니다, 관리자님.`, 'success');
       alert("🔒 로그인 완료! 실시간 데이터 모니터링 및 설정 대시보드로 이동합니다.");
-    }, 1500);
+    })
+    .catch((err) => {
+      setIsAuthenticating(false);
+      onAddLog(`❌ 로그인 실패: ${err.message}`, 'alert');
+      alert(`⚠️ 로그인 실패: ${err.message}`);
+    });
   };
 
   return (
