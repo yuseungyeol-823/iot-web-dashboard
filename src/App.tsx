@@ -61,18 +61,18 @@ export default function App() {
   // 3. State Setup: Terminal system logs history
   const [logs, setLogs] = useState<LogMessage[]>(() => {
     const defaultLogs: LogMessage[] = [
-      { id: '1', timestamp: '14:20:00', message: '에테르스페이스 관제 시스템 코어 초기화 중...', type: 'info' },
-      { id: '2', timestamp: '14:20:02', message: 'SSE 프로토콜 연결 완료 [AES-256 보안 통신]', type: 'success' },
-      { id: '3', timestamp: '14:20:05', message: '관리 노드 01 링크 수립 완료: 채널 알파 온라인', type: 'success' },
-      { id: '4', timestamp: '14:21:45', message: '좌석 S-02: 이용 가능 → 사용 중 (포지션 센서 움직임 감지)', type: 'info' },
-      { id: '5', timestamp: '14:21:52', message: '좌석 S-14: 이용 가능 → 사용 중 (포지션 센서 움직임 감지)', type: 'info' },
-      { id: '6', timestamp: '14:22:01', message: '좌석 S-05: 사용 중 → 자리 비움 (부재 감지 타이머 활성화)', type: 'warning' },
-      { id: '7', timestamp: '14:22:15', message: '좌석 S-33: 이용 가능 → 사용 중 (포지션 센서 움직임 감지)', type: 'info' },
-      { id: '8', timestamp: '14:23:02', message: '좌석 S-01: 이용 가능 → 사용 중 (포지션 센서 움직임 감지)', type: 'info' },
-      { id: '9', timestamp: '14:23:45', message: '좌석 S-12: 사용 중 → 자리 비움 (부재 감지 타이머 활성화)', type: 'warning' },
-      { id: '10', timestamp: '14:24:10', message: '좌석 S-09: 이용 가능 → 사용 중 (포지션 센서 움직임 감지)', type: 'info' },
-      { id: '11', timestamp: '14:25:33', message: '시스템 환경 안전 규격 검증 완료: 정상 작동 중', type: 'success' },
-      { id: '12', timestamp: '14:26:01', message: '좌석 S-28: 사용 중 → 자리 비움 (부재 감지 타이머 활성화)', type: 'warning' }
+      { id: '1', timestamp: '14:20:00', message: 'AetherSpace 관제 시스템 초기화 중...', type: 'info' },
+      { id: '2', timestamp: '14:20:02', message: '실시간(SSE) 데이터 연결 성공', type: 'success' },
+      { id: '3', timestamp: '14:20:05', message: '관제 노드 01 연결 성공', type: 'success' },
+      { id: '4', timestamp: '14:21:45', message: '좌석 S-02: 사용 중 감지 (움직임 감지)', type: 'info' },
+      { id: '5', timestamp: '14:21:52', message: '좌석 S-14: 사용 중 감지 (움직임 감지)', type: 'info' },
+      { id: '6', timestamp: '14:22:01', message: '좌석 S-05: 자리 비움 감지 (부재 타이머 작동)', type: 'warning' },
+      { id: '7', timestamp: '14:22:15', message: '좌석 S-33: 사용 중 감지 (움직임 감지)', type: 'info' },
+      { id: '8', timestamp: '14:23:02', message: '좌석 S-01: 사용 중 감지 (움직임 감지)', type: 'info' },
+      { id: '9', timestamp: '14:23:45', message: '좌석 S-12: 자리 비움 감지 (부재 타이머 작동)', type: 'warning' },
+      { id: '10', timestamp: '14:24:10', message: '좌석 S-09: 사용 중 감지 (움직임 감지)', type: 'info' },
+      { id: '11', timestamp: '14:25:33', message: '시스템 상태 정상 작동 중', type: 'success' },
+      { id: '12', timestamp: '14:26:01', message: '좌석 S-28: 자리 비움 감지 (부재 타이머 작동)', type: 'warning' }
     ];
     return defaultLogs;
   });
@@ -93,7 +93,154 @@ export default function App() {
   // Update secure parameters globally
   const handleUpdateParams = (awayTimeout: number, sensitivity: 'Low' | 'Medium' | 'High') => {
     setSensingParams({ awayTimeout, sensitivity });
+    // Update all active AWAY seats' timers to the new timeout in seconds
+    setSeats(prevSeats => {
+      return prevSeats.map(seat => {
+        if (seat.status === 'AWAY') {
+          // Send update to backend to sync the new remaining time
+          const numericId = seat.id.replace('S-', '');
+          fetch(`http://${window.location.hostname}:8080/api/seats/update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              seatId: numericId,
+              status: 'away',
+              remainingTime: awayTimeout * 60
+            })
+          }).catch(err => console.error('Failed to sync seat timer on parameter update:', err));
+
+          return {
+            ...seat,
+            timer: awayTimeout * 60,
+            maxTimer: awayTimeout * 60
+          };
+        }
+        return seat;
+      });
+    });
   };
+
+  // 3.5 Live Backend Integration: SSE Event Streaming Subscription
+  useEffect(() => {
+    addLog('📡 실시간(SSE) 데이터 동기화 연결 시도 중...', 'info');
+
+    // Dynamically connect using current window hostname to ensure robustness in demo networking environments
+    const eventSource = new EventSource(`http://${window.location.hostname}:8080/api/seats/stream`);
+
+    eventSource.addEventListener('init', (event) => {
+      try {
+        const backendSeats = JSON.parse(event.data);
+        setSeats(prevSeats => {
+          return prevSeats.map(seat => {
+            const numericId = seat.id.replace('S-', '');
+            const match = backendSeats.find((bs: any) => bs.seatId === numericId);
+            if (match) {
+              const statusMap: Record<string, 'AVAILABLE' | 'OCCUPIED' | 'AWAY'> = {
+                'empty': 'AVAILABLE',
+                'occupied': 'OCCUPIED',
+                'away': 'AWAY'
+              };
+              const nextStatus = statusMap[match.status] || 'AVAILABLE';
+              return {
+                ...seat,
+                status: nextStatus,
+                timer: match.remainingTime ?? undefined
+              };
+            }
+            return seat;
+          });
+        });
+        addLog(`🟢 실시간 연결 성공: 총 ${backendSeats.length}개 좌석 상태가 동기화되었습니다.`, 'success');
+      } catch (err) {
+        console.error('Error parsing init data:', err);
+        addLog('❌ 데이터 파싱 실패: 데이터 구조 형식이 불일치합니다.', 'alert');
+      }
+    });
+
+    eventSource.addEventListener('seat-update', (event) => {
+      try {
+        const updated = JSON.parse(event.data); // { seatId: "04", status: "away", remainingTime: 900 }
+        const reactId = `S-${updated.seatId}`;
+
+        setSeats(prevSeats => {
+          let prevStatusLabel = '이용 가능';
+          let nextStatusLabel = '이용 가능';
+          let logType: 'info' | 'success' | 'warning' = 'info';
+
+          const targetSeat = prevSeats.find(s => s.id === reactId);
+          if (targetSeat) {
+            const statusMapLabel: Record<string, string> = {
+              'AVAILABLE': '이용 가능',
+              'OCCUPIED': '사용 중',
+              'AWAY': '자리 비움'
+            };
+            prevStatusLabel = statusMapLabel[targetSeat.status] || '이용 가능';
+          }
+
+          const statusMap: Record<string, 'AVAILABLE' | 'OCCUPIED' | 'AWAY'> = {
+            'empty': 'AVAILABLE',
+            'occupied': 'OCCUPIED',
+            'away': 'AWAY'
+          };
+          const nextStatus = statusMap[updated.status] || 'AVAILABLE';
+
+          if (nextStatus === 'AVAILABLE') {
+            nextStatusLabel = '이용 가능';
+            logType = 'success';
+          } else if (nextStatus === 'OCCUPIED') {
+            nextStatusLabel = '사용 중';
+            logType = 'info';
+          } else if (nextStatus === 'AWAY') {
+            nextStatusLabel = '자리 비움';
+            logType = 'warning';
+          }
+
+          // Build context-rich terminal system logs based on transition state
+          let logMessage = '';
+          if (nextStatus === 'AVAILABLE') {
+            if (targetSeat?.status === 'AWAY') {
+              logMessage = `⚙️ 자동 반납 완료: ${reactId} 좌석의 비움 시간이 만료되어 '이용 가능' 상태로 자동 전환되었습니다.`;
+            } else {
+              logMessage = `♻️ 수동 리셋 완료: ${reactId} 좌석을 '이용 가능' 상태로 강제 전환했습니다.`;
+            }
+          } else if (nextStatus === 'OCCUPIED') {
+            logMessage = `좌석 ${reactId}: 사용 중 감지 (움직임 감지)`;
+          } else if (nextStatus === 'AWAY') {
+            const minutes = updated.remainingTime ? Math.floor(updated.remainingTime / 60) : 15;
+            logMessage = `⚠️ 부재 감지 알림: ${reactId} 좌석에 움직임이 없습니다. 자리비움 타이머(${minutes}분)가 가동됩니다.`;
+          }
+
+          // Schedule logging on task queue to decouple from state update cycle
+          setTimeout(() => {
+            addLog(logMessage, logType);
+          }, 0);
+
+          return prevSeats.map(seat => {
+            if (seat.id === reactId) {
+              return {
+                ...seat,
+                status: nextStatus,
+                timer: updated.remainingTime ?? undefined
+              };
+            }
+            return seat;
+          });
+        });
+      } catch (err) {
+        console.error('Error parsing seat update data:', err);
+      }
+    });
+
+    eventSource.onerror = (err) => {
+      console.error('SSE connection error:', err);
+      addLog('🚨 서버 연결이 종료되었습니다. 실시간 채널 재연결을 시도합니다...', 'alert');
+    };
+
+    return () => {
+      eventSource.close();
+      addLog('🔌 실시간 관제 채널 연결 종료', 'info');
+    };
+  }, [addLog]);
 
   // 4. Real-time Away timers countdown tick loops (Every Second)
   useEffect(() => {
@@ -106,10 +253,18 @@ export default function App() {
             const nextSec = seat.timer - 1;
             
             if (nextSec <= 0) {
-              // Timer expired - revert to available states under FSM rules
-              setTimeout(() => {
-                addLog(`⚙️ FSM 자동 정리 완료: ${seat.id} 구역 '자리 비움'이 연장 없이 종료되어 '이용 가능' 상태로 오토-리셋되었습니다.`, 'success');
-              }, 50);
+              // Timer expired - trigger available reset event to backend
+              const numericId = seat.id.replace('S-', '');
+              fetch(`http://${window.location.hostname}:8080/api/seats/update`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  seatId: numericId,
+                  status: 'empty',
+                  remainingTime: null
+                })
+              }).catch(err => console.error('FSM timer auto-reset failed:', err));
+
               return {
                 ...seat,
                 status: 'AVAILABLE' as const,
@@ -128,78 +283,90 @@ export default function App() {
     }, 1000);
 
     return () => clearInterval(timerTick);
-  }, [addLog]);
+  }, []);
 
-  // 5. Automated low-frequency random sensor heartbeat simulator (Every 35 seconds)
+  // 5. Simulated Raspberry Pi YOLOv8 / sensor telemetry heartbeat (Every 35 seconds)
   useEffect(() => {
     const heartbeat = setInterval(() => {
       // Pick a random seat to trip state for high density simulation
       const randIdx = Math.floor(Math.random() * 48);
+      const seatIdStr = String(randIdx + 1).padStart(2, '0');
+      const reactId = `S-${seatIdStr}`;
+
       setSeats(prevSeats => {
-        const nextSeats = [...prevSeats];
-        const target = nextSeats[randIdx];
+        const target = prevSeats.find(s => s.id === reactId);
+        if (!target) return prevSeats;
+
+        let nextBackendStatus = 'empty';
+        let nextRemainingTime = null;
 
         if (target.status === 'AVAILABLE') {
-          target.status = 'OCCUPIED';
-          addLog(`📡 시스템 텔레메트리: ${target.id} 구역이 '이용 가능'에서 '사용 중' 상태로 자동 전환되었습니다.`, 'info');
+          nextBackendStatus = 'occupied';
         } else if (target.status === 'OCCUPIED') {
-          target.status = 'AWAY';
-          target.timer = 582; // 9:42 reset
-          addLog(`⚠️ 부재 감지 알림: ${target.id} 구역 모션 부재 감지 - '자리 비움' 허용 타이머가 시작되었습니다.`, 'warning');
+          nextBackendStatus = 'away';
+          nextRemainingTime = sensingParams.awayTimeout * 60;
         } else if (target.status === 'AWAY') {
-          target.status = 'AVAILABLE';
-          target.timer = undefined;
-          addLog(`♻️ 센서 강제 동기화: ${target.id} 구역의 '자리 비움' 홀딩이 수동 리셋되어 '이용 가능' 상태로 반환되었습니다.`, 'success');
+          nextBackendStatus = 'empty';
         }
-        return nextSeats;
+
+        // POST status update to backend, which triggers SSE broadcast to all subscribers
+        fetch(`http://${window.location.hostname}:8080/api/seats/update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            seatId: seatIdStr,
+            status: nextBackendStatus,
+            remainingTime: nextRemainingTime
+          })
+        }).catch(err => console.error('Raspberry Pi heartbeat emulation update failed:', err));
+
+        return prevSeats; // do not update state locally; let SSE stream broadcast handle state transition smoothly
       });
     }, 35000);
 
     return () => clearInterval(heartbeat);
-  }, [addLog]);
+  }, [sensingParams.awayTimeout]);
 
-  // Update specific seat states via manual Administrator overrides
+  // Update specific seat states via manual Administrator overrides calling the backend API
   const handleUpdateSeat = (seatId: string, newStatus: 'AVAILABLE' | 'OCCUPIED' | 'AWAY') => {
-    setSeats(prevSeats => {
-      return prevSeats.map(seat => {
-        if (seat.id === seatId) {
-          const prevStatus = seat.status;
-          
-          let prevLabel = '이용 가능';
-          if (prevStatus === 'OCCUPIED') prevLabel = '사용 중';
-          if (prevStatus === 'AWAY') prevLabel = '자리 비움';
+    const numericId = seatId.replace('S-', '');
+    const backendStatus = newStatus === 'AVAILABLE' ? 'empty' : (newStatus === 'OCCUPIED' ? 'occupied' : 'away');
+    const remainingTime = newStatus === 'AWAY' ? sensingParams.awayTimeout * 60 : null;
 
-          let nextLabel = '이용 가능';
-          if (newStatus === 'OCCUPIED') nextLabel = '사용 중';
-          if (newStatus === 'AWAY') nextLabel = '자리 비움';
-
-          // Log changes in terminal
-          const label = `⚙️ 관리자 오버라이드: ${seatId}의 원격 상태를 수동 변경했습니다. (${prevLabel} → ${nextLabel})`;
-          let logType: 'info' | 'success' | 'warning' = 'info';
-          if (newStatus === 'AVAILABLE') logType = 'success';
-          if (newStatus === 'AWAY') logType = 'warning';
-          
-          addLog(label, logType);
-
-          return {
-            ...seat,
-            status: newStatus,
-            timer: newStatus === 'AWAY' ? 582 : undefined // reset default min
-          };
-        }
-        return seat;
-      });
+    fetch(`http://${window.location.hostname}:8080/api/seats/update`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        seatId: numericId,
+        status: backendStatus,
+        remainingTime: remainingTime
+      })
+    })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error('Failed to update seat status on backend cache');
+      }
+      return res.json();
+    })
+    .then(data => {
+      console.log('Seat successfully overridden on backend:', data);
+    })
+    .catch(err => {
+      console.error('Error overriding seat status:', err);
+      addLog(`❌ 상태 변경 실패: ${seatId} 좌석의 원격 제어 도중 네트워크 통신 에러가 발생했습니다.`, 'alert');
     });
   };
 
   const handleTriggerAuthAlert = () => {
     setAuthAlertActive(true);
-    addLog("🔒 접근 차단 알림: 비인가 접근 경로 감지로 인해 관리자 라우터 가드가 활성화되었습니다.", "alert");
+    addLog("🔒 접근 경고: 관리자 인증이 필요한 접근 경로입니다.", "alert");
   };
 
   const handleClearLogs = () => {
     setLogs([
-      { id: String(Date.now()), timestamp: new Date().toTimeString().split(' ')[0], message: '시스템 이벤트 로그 콘솔 화면을 정돈했습니다 — 실시간 추적 대기 중...', type: 'info' }
+      { id: String(Date.now()), timestamp: new Date().toTimeString().split(' ')[0], message: '시스템 로그 콘솔이 초기화되었습니다.', type: 'info' }
     ]);
   };
 

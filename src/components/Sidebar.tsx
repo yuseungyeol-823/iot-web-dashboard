@@ -51,10 +51,10 @@ export default function Sidebar({
             <Database size={20} className="animate-pulse" />
           </div>
           <div>
-            <p className="text-slate-250 font-bold text-sm">관리 노드 01</p>
+            <p className="text-slate-250 font-bold text-sm">관제 노드 01</p>
             <p className="text-blue-400 text-[10px] uppercase tracking-widest font-extrabold flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-ping"></span>
-              시스템 온라인
+              시스템 정상 가동 중
             </p>
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function Sidebar({
               }`}
             >
               <LayoutDashboard size={18} />
-              <span className="text-sm font-medium">실시간 공간 관제</span>
+              <span className="text-sm font-medium">실시간 좌석 현황</span>
             </button>
 
             <button
@@ -85,7 +85,7 @@ export default function Sidebar({
               }`}
             >
               <TrendingUp size={18} />
-              <span className="text-sm font-medium">공간 분석 대시보드</span>
+              <span className="text-sm font-medium">공간 이용 통계</span>
             </button>
 
             <button
@@ -97,7 +97,7 @@ export default function Sidebar({
               }`}
             >
               <Sliders size={18} />
-              <span className="text-sm font-medium">시스템 제어 설정</span>
+              <span className="text-sm font-medium">감지 & 반납 설정</span>
             </button>
           </>
         )}
@@ -111,11 +111,10 @@ export default function Sidebar({
           }`}
         >
           <Lock size={18} />
-          <span className="text-sm font-medium">인증 게이트웨이</span>
+          <span className="text-sm font-medium">관리자 인증</span>
         </button>
       </nav>
 
-      {/* Sidebar Footer */}
       <div className="mt-auto px-4 space-y-2">
         {isAuthenticated && (
           <button
@@ -127,7 +126,7 @@ export default function Sidebar({
             }`}
           >
             <Terminal size={14} />
-            이벤트 로그 {terminalOpen ? '활성화' : '숨김'}
+            실시간 로그 터미널 {terminalOpen ? '닫기' : '열기'}
           </button>
         )}
 
@@ -135,14 +134,14 @@ export default function Sidebar({
           <div className="pt-2 border-t border-slate-850">
             <button
               onClick={() => {
-                if (confirm("Are you sure you want to log out?")) {
+                if (confirm("정말 로그아웃 하시겠습니까?")) {
                   window.location.reload();
                 }
               }}
               className="w-full text-left text-rose-450 hover:text-rose-400 px-4 py-2 flex items-center gap-3 text-xs tracking-wide rounded-lg transition-colors hover:bg-rose-950/20"
             >
               <LogOut size={14} />
-              Logout
+              로그아웃
             </button>
           </div>
         )}

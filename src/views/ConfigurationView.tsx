@@ -62,8 +62,8 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
 
   const handleUpdateBackend = () => {
     onUpdateParams(localTimeout, localSensitivity);
-    onAddLog(`⚙️ 시스템 감지 임계 조절 배포: 부재 한계 기준 타임아웃 ${localTimeout}분으로 전송 완료`, 'warning');
-    alert("🚀 임계점 데이터 동기화 완료! 수정한 자동화 룰셋이 실시간으로 전향 배포 중입니다.");
+    onAddLog(`⚙️ 감지 임계 설정 배포: 자동 반납 대기 시간 ${localTimeout}분으로 변경 완료`, 'warning');
+    alert("🚀 설정을 성공적으로 저장했습니다! 변경된 설정이 실시간으로 배포되고 있습니다.");
   };
 
   const handleTimeoutSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,9 +77,9 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
   };
 
   const handleAddCluster = () => {
-    const name = prompt("신규로 등록할 물리 ROI 영역명을 고유값으로 정의해 주세요 (예: 휴게_바_하단):");
+    const name = prompt("새로 등록할 감지 영역(ROI) 이름을 입력하세요 (예: 휴게실 바 테이블_하단):");
     if (name) {
-      const nodeIdsString = prompt("해당 영역에 귀속할 연동 디텍션 노드 번호목록을 컴마로 명시해 주세요 (예: 301, 302):", "301, 302");
+      const nodeIdsString = prompt("해당 영역에 포함할 센서 노드(좌석) 번호 목록을 쉼표(,)로 구분해 입력하세요 (예: 301, 302):", "301, 302");
       const ids = nodeIdsString ? nodeIdsString.split(',').map(s => Number(s.trim())) : [];
       const newCluster: DetectionCluster = {
         id: String(Date.now()),
@@ -87,7 +87,7 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
         nodeIds: ids
       };
       setClusters([...clusters, newCluster]);
-      onAddLog(`➕ 신규 ROI 클러스터 영역 바운더리 등록 완료: ${name} (연동 노드 목록: [${ids.join(', ')}])`, 'info');
+      onAddLog(`➕ 신규 감지 영역 등록 완료: ${name} (포함 노드: [${ids.join(', ')}])`, 'info');
     }
   };
 
@@ -97,13 +97,13 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
       {/* Header Info Banner */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">디텍션 모듈 및 알고리즘 임계 설정</h1>
-          <p className="text-xs text-slate-400 mt-0.5">실시간 네트워크 AI 카메라 노션 벡터 추적 캘리브레이션 및 자리비움 수명 한도 콘솔.</p>
+          <h1 className="text-2xl font-bold text-slate-100">센서 감지 모듈 및 자동 반납 임계 설정</h1>
+          <p className="text-xs text-slate-400 mt-0.5">AI 카메라 기반 실시간 감지 영역 설정 및 자동 반납 시간 제어 판넬입니다.</p>
         </div>
         <div className="flex gap-4">
           <div className="flex items-center gap-2 text-[10px] font-mono select-none bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg shadow-sm">
             <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse-slow"></span>
-            <span className="text-slate-300 font-bold uppercase">CCTV_노드_CAM_04: 실시간 가동 중</span>
+            <span className="text-slate-300 font-bold uppercase">CAM_04: 실시간 정상 가동 중</span>
           </div>
         </div>
       </div>
@@ -125,7 +125,7 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
           {/* Blink red Live marker */}
           <div className="absolute top-4 left-4 bg-rose-600 border border-rose-500 text-white px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest flex items-center gap-2 select-none shadow">
             <span className={`w-2 h-2 bg-white rounded-full ${isPlaying ? 'animate-ping' : 'opacity-50'}`}></span>
-            {isPlaying ? '실시간 비디오 분석 작동 중' : '수집 파이프라인 전송 일시정지됨'}
+            {isPlaying ? '실시간 비디오 분석 작동 중' : '수집 파이프라인 일시 정지됨'}
           </div>
 
           {/* Current system stopwatch time overlay */}
@@ -143,9 +143,9 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
             <button 
               onClick={() => {
                 setIsPlaying(!isPlaying);
-                onAddLog(isPlaying ? "⚠️ 실시간 보안분석 카메라_04 채널이 사용자 관리 명령으로 일시 일시정지되었습니다." : "📡 실시간 비디오 검측 시스템 04번 노드 가동을 인가했습니다. AI 탐지 동작 상태로 복귀합니다.", isPlaying ? 'warning' : 'success');
+                onAddLog(isPlaying ? "⚠️ CAM_04 카메라 채널이 관리자 명령에 의해 일시 정지되었습니다." : "📡 CAM_04 카메라 분석 노드가 정상적으로 시작되었습니다.", isPlaying ? 'warning' : 'success');
               }}
-              className="w-16 h-16 rounded-full bg-slate-900/90 text-blue-400 border border-slate-800 flex items-center justify-center active:scale-90 transition-transform cursor-pointer shadow-2xl"
+              className="w-16 h-16 rounded-full bg-slate-900/90 text-blue-405 border border-slate-800 flex items-center justify-center active:scale-90 transition-transform cursor-pointer shadow-2xl"
             >
               {isPlaying ? <Pause size={28} /> : <Play size={28} className="translate-x-0.5" />}
             </button>
@@ -161,13 +161,13 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 pb-2 border-b border-slate-800">
             <h2 className="font-sans font-bold text-slate-200 flex items-center gap-2">
               <Crop className="text-blue-400" size={18} />
-              CCTV 미세 영역 관심지면 (ROI) 미세 좌표 캘리브레이션
+              CCTV 관심 영역(ROI) 감지 좌표 설정
             </h2>
             <div className="flex gap-2">
               <button 
                 onClick={() => {
-                  onAddLog("♻️ 04번 카메라 노드의 ROI 디텍트 좌표 바운더리를 공장 초기값으로 롤백합니다...", 'info');
-                  alert("초기 공장 기준 좌표 상태로 영역을 환원합니다.");
+                  onAddLog("♻️ CAM_04 카메라의 감지 영역 좌표를 기본값으로 초기화합니다...", 'info');
+                  alert("감지 영역을 기본 좌표값으로 초기화합니다.");
                 }}
                 className="px-3 py-1 bg-slate-900 border border-slate-800 rounded text-xs text-slate-400 hover:bg-slate-850 cursor-pointer transition-colors"
               >
@@ -175,12 +175,12 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
               </button>
               <button 
                 onClick={() => {
-                  onAddLog("⚙️ 감지 구역 매핑 확정: ZONE_A1 및 수정관심영역 MODIFIED_ROI_B 형상을 실시간 컴파일 데이터베이스로 재배포 완료", 'success');
-                  alert("성공적으로 좌표 지오메트리를 컴파일했습니다. 공간 분산 DB 업데이트를 마쳤습니다.");
+                  onAddLog("⚙️ 감지 구역 매핑 저장 완료: 변경된 영역 정보가 서버와 데이터베이스에 반영되었습니다.", 'success');
+                  alert("관제 영역 좌표 설정이 성공적으로 저장 및 배포되었습니다.");
                 }}
                 className="px-3.5 py-1 bg-blue-600 text-white text-xs font-bold rounded shadow hover:bg-blue-750 cursor-pointer active:scale-95 transition-all"
               >
-                영역 정보 공포 (동기화)
+                영역 설정 저장 (동기화)
               </button>
             </div>
           </div>
@@ -209,7 +209,7 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
             </div>
 
             <div className="absolute top-[52%] left-[55%] w-[18%] h-[32%] border-2 border-amber-500 bg-amber-500/10 flex flex-col justify-between p-1 shadow hover:scale-105 duration-300">
-              <span className="font-mono text-[8px] text-amber-500 font-bold">수정관심구할점_B (노쇼 구역)</span>
+              <span className="font-mono text-[8px] text-amber-500 font-bold">임시 지정 구역_B (부재중 방지)</span>
               <span className="font-mono text-[8px] text-amber-500 self-end font-bold">160x192 px</span>
             </div>
 
@@ -219,7 +219,7 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
             {/* Simulated follows-the-mouse digital coordinate pointer */}
             <div className="absolute bottom-4 left-4 bg-slate-900/95 px-3 py-1.5 rounded-lg border border-slate-800 font-mono text-[10px] text-blue-400 flex items-center gap-1.5 shadow-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping inline-block"></span>
-              가상 추적 X: {coords.x}픽셀 | Y: {coords.y}픽셀
+              현재 마우스 좌표 X: {coords.x}px | Y: {coords.y}px
             </div>
           </div>
         </div>
@@ -228,7 +228,7 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
         <div className="lg:col-span-4 glass-card rounded-2xl p-5 flex flex-col justify-between space-y-4 border border-slate-800/60 shadow-lg">
           <div>
             <h3 className="font-sans font-bold text-xs tracking-wider text-slate-350 uppercase pb-2 border-b border-slate-800 mb-3">
-              영역별 디텍션 연동 클러스터
+              구역별 센서 감지 영역(클러스터)
             </h3>
             
             <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar w-full">
@@ -245,8 +245,8 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
                   </div>
                   <button 
                     onClick={() => {
-                      onAddLog(`⚙️ [${c.name}] 클러스터 캘리브레이션 미세 조정 인가`, 'info');
-                      alert(`영역 [${c.name}] 에 대한 정합 프로파일 포커스 조정 단계를 실행합니다.`);
+                      onAddLog(`⚙️ [${c.name}] 클러스터 감지 영역 미세 조정 단계 진행`, 'info');
+                      alert(`영역 [${c.name}]의 초점 및 감지 정합 설정을 조정합니다.`);
                     }}
                     className="text-slate-500 group-hover:text-blue-400 hover:rotate-90 transition-all duration-300 cursor-pointer"
                   >
@@ -261,7 +261,7 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
             onClick={handleAddCluster}
             className="w-full py-2 border-2 border-dashed border-slate-800 hover:border-blue-500 hover:text-blue-400 transition-colors rounded-xl text-xs font-semibold text-slate-400 flex items-center justify-center gap-1.5 cursor-pointer bg-slate-900/40"
           >
-            <Plus size={14} /> 신규 검측 ROI 구획 바운더리 등록
+            <Plus size={14} /> 새 감지 구역(ROI) 등록
           </button>
         </div>
       </section>
@@ -270,7 +270,7 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
       <section className="glass-card rounded-2xl p-6 border border-slate-800/60 shadow-lg space-y-6">
         <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
           <SlidersHorizontal className="text-blue-400" size={18} />
-          <h2 className="font-sans font-bold text-base text-slate-200">공간 리소스 탐지 알고리즘 임계 파라미터</h2>
+          <h2 className="font-sans font-bold text-base text-slate-200">좌석 감지 및 자동 반납 시간 제어</h2>
         </div>
 
         <div className="max-w-2xl mx-auto py-2">
@@ -279,10 +279,10 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider font-sans">
-                미사용 판단 강제 타임아웃 허용선 (분 단위)
+                자리비움 자동 반납 기준 시간 (분)
               </label>
               <span className="font-mono text-xs font-bold text-blue-400 px-3 py-1 bg-blue-500/10 rounded-full border border-blue-500/20">
-                부재 {localTimeout}분
+                자리비움 {localTimeout}분
               </span>
             </div>
             
@@ -301,7 +301,7 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
               <span>최대 30분</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
-              좌석에 실제 움직임 요소가 없을 경우, 자원 효율 최적화를 도포하여 FSM 알고리즘이 해당 자리를 자동 가용(Available) 반납 상태로 강제 전환하기 전까지 부재를 허용해주어 홀드할 한계 분 시간입니다.
+              좌석에 움직임이 없을 때, 시스템이 해당 자리를 강제로 '이용 가능' 상태로 반납하기 전까지 '자리 비움' 상태를 유지해줄 대기 시간입니다.
             </p>
           </div>
 
@@ -311,7 +311,7 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
         <div className="mt-6 pt-5 border-t border-slate-800 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div className="flex items-center gap-2 text-xs text-rose-350 bg-rose-500/5 border border-rose-500/10 px-3 py-1.5 rounded-lg select-none font-medium">
             <AlertTriangle size={14} className="animate-pulse text-rose-500" />
-            <span>주의: 본 설정값을 공포하면 전 구획 게이트웨이에 귀속된 카메라도 60초 이내에 자동 동기화 배포됩니다.</span>
+            <span>주의: 본 설정을 변경 및 배포하면 연결된 모든 카메라 및 실시간 관제 시스템에 60초 이내에 동기화됩니다.</span>
           </div>
           
           <div className="flex gap-3 justify-end">
@@ -319,18 +319,18 @@ export default function ConfigurationView({ onAddLog, sensingParams, onUpdatePar
               onClick={() => {
                 setLocalTimeout(sensingParams.awayTimeout);
                 setLocalSensitivity(sensingParams.sensitivity);
-                onAddLog("♻️ 지상 임계 조절 파라미터 수정안이 정상적으로 폐기 조치되었습니다.", 'info');
+                onAddLog("♻️ 설정 변경사항이 취소되었습니다.", 'info');
               }}
               className="px-5 py-2 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-800 hover:text-slate-200 bg-slate-900 cursor-pointer transition-colors border border-slate-800"
             >
-              알고리즘 수정안 원격 폐기
+              변경사항 취소
             </button>
             <button 
               onClick={handleUpdateBackend}
               className="px-7 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold active:scale-95 transition-all cursor-pointer flex items-center gap-1"
             >
               <RefreshCw size={12} />
-              FSM 백엔드 동기화 릴리즈
+              설정 저장 및 동기화
             </button>
           </div>
         </div>
