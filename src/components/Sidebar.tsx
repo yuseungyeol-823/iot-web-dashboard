@@ -85,7 +85,7 @@ export default function Sidebar({
               }`}
             >
               <TrendingUp size={18} />
-              <span className="text-sm font-medium">공간 이용 통계</span>
+              <span className="text-sm font-medium">자동 반납 이력</span>
             </button>
 
             <button

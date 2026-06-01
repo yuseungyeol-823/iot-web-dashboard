@@ -21,21 +21,10 @@ export interface LogMessage {
 
 export interface NoShowRecord {
   id: string;
-  user: {
-    name: string;
-    avatar: string;
-    idTag: string;
-  };
   seatNode: string;
   lastMotion: string;
   idleProgress: number; // percentage (max 100 for limit)
   limitText: string;
   actionTaken: string;
   status: 'Released' | 'Warning' | 'Active Grace';
-}
-
-export interface DetectionCluster {
-  id: string;
-  name: string;
-  nodeIds: number[];
 }
