@@ -3,13 +3,15 @@ package com.example.occupancy.dto;
 public class ConfigDto {
     private Integer awayTimeout;
     private String sensitivity;
+    private String streamUrl;
 
     public ConfigDto() {
     }
 
-    public ConfigDto(Integer awayTimeout, String sensitivity) {
+    public ConfigDto(Integer awayTimeout, String sensitivity, String streamUrl) {
         this.awayTimeout = awayTimeout;
         this.sensitivity = sensitivity;
+        this.streamUrl = streamUrl;
     }
 
     public Integer getAwayTimeout() {
@@ -26,5 +28,13 @@ public class ConfigDto {
 
     public void setSensitivity(String sensitivity) {
         this.sensitivity = sensitivity;
+    }
+
+    public String getStreamUrl() {
+        return streamUrl;
+    }
+
+    public void setStreamUrl(String streamUrl) {
+        this.streamUrl = streamUrl;
     }
 }

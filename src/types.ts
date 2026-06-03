@@ -21,11 +21,6 @@ export interface LogMessage {
 
 export interface NoShowRecord {
   id: string;
-  user: {
-    name: string;
-    avatar: string;
-    idTag: string;
-  };
   seatNode: string;
   lastMotion: string;
   idleProgress: number; // percentage (max 100 for limit)
