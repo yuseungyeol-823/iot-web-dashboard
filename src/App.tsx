@@ -16,7 +16,7 @@ import MonitoringView from './views/MonitoringView';
 import ConfigurationView from './views/ConfigurationView';
 import AnalyticsView from './views/AnalyticsView';
 import GatewayView from './views/GatewayView';
-import { Seat, LogMessage } from './types';
+import { Seat, LogMessage, NoShowRecord } from './types';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<string>('gateway');
@@ -28,35 +28,13 @@ export default function App() {
   // 1. Core global state logic: sensing rules parameters
   const [sensingParams, setSensingParams] = useState({
     awayTimeout: 15,
-    sensitivity: 'High' as 'Low' | 'Medium' | 'High'
+    sensitivity: 'High' as 'Low' | 'Medium' | 'High',
+    streamUrl: ''
   });
 
-  // 2. State setup: 48 Seat maps list structure initialization
-  const [seats, setSeats] = useState<Seat[]>(() => {
-    const list: Seat[] = [];
-    for (let i = 1; i <= 48; i++) {
-      const id = `S-${String(i).padStart(2, '0')}`;
-      
-      // Default configurations similar to original design mockup
-      let status: 'AVAILABLE' | 'OCCUPIED' | 'AWAY' = 'AVAILABLE';
-      let timer: number | undefined;
-
-      if (i === 5 || i === 12 || i === 28) {
-        status = 'AWAY';
-        timer = 582; // 9min 42s
-      } else if (i % 4 === 0) {
-        status = 'OCCUPIED';
-      }
-
-      list.push({
-        id,
-        status,
-        timer,
-        maxTimer: 582
-      });
-    }
-    return list;
-  });
+  // 2. State setup: Dynamic Seat list structure initialization (populated via IoT nodes)
+  const [seats, setSeats] = useState<Seat[]>([]);
+  const [records, setRecords] = useState<NoShowRecord[]>([]);
 
   // 3. State Setup: Terminal system logs history
   const [logs, setLogs] = useState<LogMessage[]>(() => {
@@ -91,8 +69,8 @@ export default function App() {
   }, []);
 
   // Update secure parameters globally
-  const handleUpdateParams = (awayTimeout: number, sensitivity: 'Low' | 'Medium' | 'High') => {
-    setSensingParams({ awayTimeout, sensitivity });
+  const handleUpdateParams = (awayTimeout: number, sensitivity: 'Low' | 'Medium' | 'High', streamUrl: string) => {
+    setSensingParams({ awayTimeout, sensitivity, streamUrl });
 
     // Sync global configurations to the Spring Boot backend
     fetch(`http://${window.location.hostname}:8080/api/admin/config`, {
@@ -100,7 +78,8 @@ export default function App() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         awayTimeout,
-        sensitivity
+        sensitivity,
+        streamUrl
       })
     })
     .then(res => {
@@ -149,7 +128,8 @@ export default function App() {
       .then(data => {
         setSensingParams({
           awayTimeout: data.awayTimeout,
-          sensitivity: data.sensitivity
+          sensitivity: data.sensitivity,
+          streamUrl: data.streamUrl || ''
         });
         addLog(`⚙️ 백엔드로부터 AI 감지 임계 설정을 동기화했습니다 (부재 대기: ${data.awayTimeout}분)`, 'success');
       })
@@ -168,26 +148,40 @@ export default function App() {
     eventSource.addEventListener('init', (event) => {
       try {
         const backendSeats = JSON.parse(event.data);
-        setSeats(prevSeats => {
-          return prevSeats.map(seat => {
-            const numericId = seat.id.replace('S-', '');
-            const match = backendSeats.find((bs: any) => bs.seatId === numericId);
-            if (match) {
-              const statusMap: Record<string, 'AVAILABLE' | 'OCCUPIED' | 'AWAY'> = {
-                'empty': 'AVAILABLE',
-                'occupied': 'OCCUPIED',
-                'away': 'AWAY'
-              };
-              const nextStatus = statusMap[match.status] || 'AVAILABLE';
+        const statusMap: Record<string, 'AVAILABLE' | 'OCCUPIED' | 'AWAY'> = {
+          'empty': 'AVAILABLE',
+          'occupied': 'OCCUPIED',
+          'away': 'AWAY'
+        };
+        const mapped: Seat[] = backendSeats.map((bs: any) => ({
+          id: `S-${bs.seatId}`,
+          status: statusMap[bs.status] || 'AVAILABLE',
+          timer: bs.remainingTime ?? undefined,
+          maxTimer: bs.remainingTime ?? undefined
+        }));
+        setSeats(mapped);
+
+        // Pre-populate records with any active away seats from init
+        const awaySeats = backendSeats.filter((bs: any) => bs.status === 'away');
+        if (awaySeats.length > 0) {
+          setRecords(prevRecs => {
+            const newRecs: NoShowRecord[] = awaySeats.map((bs: any) => {
+              const minutes = bs.remainingTime ? Math.floor(bs.remainingTime / 60) : 15;
               return {
-                ...seat,
-                status: nextStatus,
-                timer: match.remainingTime ?? undefined
+                id: `init-${bs.seatId}-${Date.now()}`,
+                seatNode: `S-${bs.seatId}`,
+                lastMotion: new Date().toTimeString().split(' ')[0],
+                idleProgress: 50,
+                limitText: `${minutes}분 대기 (경고)`,
+                actionTaken: 'NOTIFY_SENT',
+                status: 'Active Grace'
               };
-            }
-            return seat;
+            });
+            const filteredPrev = prevRecs.filter(pr => !newRecs.some(nr => nr.seatNode === pr.seatNode));
+            return [...newRecs, ...filteredPrev];
           });
-        });
+        }
+
         addLog(`🟢 실시간 연결 성공: 총 ${backendSeats.length}개 좌석 상태가 동기화되었습니다.`, 'success');
       } catch (err) {
         console.error('Error parsing init data:', err);
@@ -199,6 +193,13 @@ export default function App() {
       try {
         const updated = JSON.parse(event.data); // { seatId: "04", status: "away", remainingTime: 900 }
         const reactId = `S-${updated.seatId}`;
+
+        const statusMap: Record<string, 'AVAILABLE' | 'OCCUPIED' | 'AWAY'> = {
+          'empty': 'AVAILABLE',
+          'occupied': 'OCCUPIED',
+          'away': 'AWAY'
+        };
+        const nextStatus = statusMap[updated.status] || 'AVAILABLE';
 
         setSeats(prevSeats => {
           let prevStatusLabel = '이용 가능';
@@ -214,13 +215,6 @@ export default function App() {
             };
             prevStatusLabel = statusMapLabel[targetSeat.status] || '이용 가능';
           }
-
-          const statusMap: Record<string, 'AVAILABLE' | 'OCCUPIED' | 'AWAY'> = {
-            'empty': 'AVAILABLE',
-            'occupied': 'OCCUPIED',
-            'away': 'AWAY'
-          };
-          const nextStatus = statusMap[updated.status] || 'AVAILABLE';
 
           if (nextStatus === 'AVAILABLE') {
             nextStatusLabel = '이용 가능';
@@ -253,6 +247,55 @@ export default function App() {
             addLog(logMessage, logType);
           }, 0);
 
+          // Update dynamic records log state
+          if (nextStatus === 'AWAY') {
+            setRecords(prevRecs => {
+              const filtered = prevRecs.filter(r => !(r.seatNode === reactId && r.status === 'Active Grace'));
+              const minutes = updated.remainingTime ? Math.floor(updated.remainingTime / 60) : 15;
+              const newRec: NoShowRecord = {
+                id: String(Date.now()),
+                seatNode: reactId,
+                lastMotion: new Date().toTimeString().split(' ')[0],
+                idleProgress: 50,
+                limitText: `${minutes}분 대기 (경고)`,
+                actionTaken: 'NOTIFY_SENT',
+                status: 'Active Grace'
+              };
+              return [newRec, ...filtered];
+            });
+          } else if (nextStatus === 'AVAILABLE' && targetSeat?.status === 'AWAY') {
+            setRecords(prevRecs => {
+              return prevRecs.map(rec => {
+                if (rec.seatNode === reactId && rec.status === 'Active Grace') {
+                  const minutes = sensingParams.awayTimeout;
+                  return {
+                    ...rec,
+                    idleProgress: 100,
+                    limitText: `${minutes}분 초과 (자동반납)`,
+                    actionTaken: 'FSM_FORCE_EXIT',
+                    status: 'Released'
+                  };
+                }
+                return rec;
+              });
+            });
+          } else if (nextStatus === 'OCCUPIED' && targetSeat?.status === 'AWAY') {
+            setRecords(prevRecs => {
+              return prevRecs.filter(rec => !(rec.seatNode === reactId && rec.status === 'Active Grace'));
+            });
+          }
+
+          const seatExists = prevSeats.some(seat => seat.id === reactId);
+          if (!seatExists) {
+            const newSeat: Seat = {
+              id: reactId,
+              status: nextStatus,
+              timer: updated.remainingTime ?? undefined,
+              maxTimer: updated.remainingTime ?? undefined
+            };
+            return [...prevSeats, newSeat].sort((a, b) => a.id.localeCompare(b.id));
+          }
+
           return prevSeats.map(seat => {
             if (seat.id === reactId) {
               return {
@@ -280,48 +323,6 @@ export default function App() {
     };
   }, [addLog]);
 
-  // 4. Real-time Away timers countdown tick loops (Every Second)
-  useEffect(() => {
-    const timerTick = setInterval(() => {
-      setSeats(prevSeats => {
-        let changed = false;
-        const nextSeats = prevSeats.map(seat => {
-          if (seat.status === 'AWAY' && seat.timer !== undefined) {
-            changed = true;
-            const nextSec = seat.timer - 1;
-            
-            if (nextSec <= 0) {
-              // Timer expired - trigger available reset event to backend
-              const numericId = seat.id.replace('S-', '');
-              fetch(`http://${window.location.hostname}:8080/api/seats/update`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  seatId: numericId,
-                  status: 'empty',
-                  remainingTime: null
-                })
-              }).catch(err => console.error('FSM timer auto-reset failed:', err));
-
-              return {
-                ...seat,
-                status: 'AVAILABLE' as const,
-                timer: undefined
-              };
-            }
-            return {
-              ...seat,
-              timer: nextSec
-            };
-          }
-          return seat;
-        });
-        return changed ? nextSeats : prevSeats;
-      });
-    }, 1000);
-
-    return () => clearInterval(timerTick);
-  }, []);
 
   // 5. Standalone IoT simulation is now offloaded to mock_iot_node.py to ensure pure server-side telemetry.
   // Update specific seat states via manual Administrator overrides calling the backend API
@@ -398,12 +399,14 @@ export default function App() {
               seats={seats} 
               onUpdateSeat={handleUpdateSeat} 
               searchQuery={searchQuery}
+              streamUrl={sensingParams.streamUrl}
             />
           )}
 
           {currentView === 'analytics' && (
             <AnalyticsView 
               onAddLog={addLog} 
+              records={records}
             />
           )}
 

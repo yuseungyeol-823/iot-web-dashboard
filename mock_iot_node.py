@@ -15,8 +15,8 @@ seats = {}  # key: "01".."48", value: "empty" | "occupied" | "away"
 away_timeout_mins = 15  # Default sync parameter
 sensitivity = "High"     # Default sync parameter
 
-# Initialize 48 seats
-for i in range(1, 49):
+# Initialize 3 seats
+for i in range(1, 4):
     seat_id = f"{i:02d}"
     seats[seat_id] = "empty"
 
@@ -76,7 +76,7 @@ try:
             last_config_sync = now
             
         # Select a random seat to trip state transition
-        rand_idx = random.randint(1, 48)
+        rand_idx = random.randint(1, 3)
         seat_id = f"{rand_idx:02d}"
         current_status = seats[seat_id]
         

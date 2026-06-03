@@ -28,3 +28,9 @@ export interface NoShowRecord {
   actionTaken: string;
   status: 'Released' | 'Warning' | 'Active Grace';
 }
+
+export interface DetectionCluster {
+  id: string;
+  name: string;
+  nodeIds: number[];
+}
