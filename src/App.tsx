@@ -293,7 +293,14 @@ export default function App() {
               timer: updated.remainingTime ?? undefined,
               maxTimer: updated.remainingTime ?? undefined
             };
-            return [...prevSeats, newSeat].sort((a, b) => a.id.localeCompare(b.id));
+            return [...prevSeats, newSeat].sort((a, b) => {
+              const numA = parseInt(a.id.replace(/\D/g, ''), 10);
+              const numB = parseInt(b.id.replace(/\D/g, ''), 10);
+              if (!isNaN(numA) && !isNaN(numB)) {
+                return numA - numB;
+              }
+              return a.id.localeCompare(b.id);
+            });
           }
 
           return prevSeats.map(seat => {
