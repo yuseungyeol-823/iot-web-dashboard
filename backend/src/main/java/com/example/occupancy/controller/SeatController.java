@@ -21,8 +21,8 @@ public class SeatController {
     private final Map<String, SeatUpdateDto> seatsCache = new ConcurrentHashMap<>();
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
     
-    // 📡 마지막 텔레메트리 업데이트 수신 시각 (밀리초)
-    private final AtomicLong lastTelemetryTime = new AtomicLong(System.currentTimeMillis());
+    // 📡 마지막 텔레메트리 업데이트 수신 시각 (밀리초) - 타 컨트롤러에서도 갱신할 수 있도록 public static 지정
+    public static final AtomicLong lastTelemetryTime = new AtomicLong(System.currentTimeMillis());
 
     // ❌ 기존 public void init() 48개 루프 생성기 완전히 삭제 ❌
 
@@ -38,7 +38,20 @@ public class SeatController {
         // 🌟 React 관제판이 켜지면, 현재까지 라즈베리파이로부터 빌드된 '진짜 존재하는 좌석들만' 선별 정렬해 전송
         try {
             List<SeatUpdateDto> allSeats = new ArrayList<>(seatsCache.values());
-            allSeats.sort(Comparator.comparing(SeatUpdateDto::getSeatId));
+            allSeats.sort((s1, s2) -> {
+                String id1 = s1.getSeatId();
+                String id2 = s2.getSeatId();
+                if (id1 == null && id2 == null) return 0;
+                if (id1 == null) return -1;
+                if (id2 == null) return 1;
+                
+                boolean isNum1 = id1.matches("\\d+");
+                boolean isNum2 = id2.matches("\\d+");
+                if (isNum1 && isNum2) {
+                    return Integer.compare(Integer.parseInt(id1), Integer.parseInt(id2));
+                }
+                return id1.compareTo(id2);
+            });
             
             emitter.send(SseEmitter.event()
                     .name("init")
@@ -51,9 +64,27 @@ public class SeatController {
         return emitter;
     }
 
+    private String normalizeSeatId(String seatId) {
+        if (seatId == null) return null;
+        String cleaned = seatId.trim();
+        if (cleaned.toUpperCase().startsWith("S-")) {
+            cleaned = cleaned.substring(2);
+        } else if (cleaned.toUpperCase().startsWith("S")) {
+            cleaned = cleaned.substring(1);
+        }
+        if (cleaned.matches("\\d+")) {
+            return String.format("%02d", Integer.parseInt(cleaned));
+        }
+        return cleaned;
+    }
+
     @PostMapping("/update")
     public ResponseEntity<Map<String, Object>> updateSeat(@RequestBody SeatUpdateDto dto) {
         
+        if (dto.getSeatId() != null) {
+            dto.setSeatId(normalizeSeatId(dto.getSeatId()));
+        }
+
         if (dto.getStatus() != null) {
             dto.setStatus(dto.getStatus().toLowerCase());
         }
@@ -94,10 +125,10 @@ public class SeatController {
         return ResponseEntity.ok(response);
     }
 
-    // 📡 12초 동안 라즈베리파이 센서/시뮬레이터 송신이 없으면 좌석 목록 초기화 (화면에서 비움)
+    // 📡 30분 동안 라즈베리파이 센서/시뮬레이터 송신이 없으면 좌석 목록 초기화 (화면에서 비움)
     @org.springframework.scheduling.annotation.Scheduled(fixedRate = 3000)
     public void checkTelemetryTimeout() {
-        if (!seatsCache.isEmpty() && (System.currentTimeMillis() - lastTelemetryTime.get() > 12000)) {
+        if (!seatsCache.isEmpty() && (System.currentTimeMillis() - lastTelemetryTime.get() > 1800000)) {
             System.out.println("⚠️ [텔레메트리 타임아웃] 라즈베리파이 오프라인 감지. 좌석 배치를 클리어합니다.");
             seatsCache.clear();
             

@@ -30,6 +30,8 @@ public class ConfigController {
 
     @GetMapping
     public ResponseEntity<ConfigDto> getConfig() {
+        // 라즈베리파이가 주기적으로 설정을 조회(Polling)하므로, 이를 하트비트(Heartbeat) 신호로 간주하여 텔레메트리 시각을 갱신합니다.
+        com.example.occupancy.controller.SeatController.lastTelemetryTime.set(System.currentTimeMillis());
         return ResponseEntity.ok(globalConfig.get());
     }
 
